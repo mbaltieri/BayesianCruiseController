@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Mon Jan 16 17:29:36 2017
+
+Passive dreamer, thesis chapter.
+Simulation of an active inference agent-based model for perception (no action) with bias for top-down processing.
+The generative process producing data is a simple OU process.
+
+@author: mb540
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 Created on Sun Jan 15 15:43:31 2017
 
-Passive tracker, thesis chapter.
-Simulation of an active inference agent-based model for perception (no action) with bias for bottom-up processing.
-The generative process producing data is a simple OU process.
+
 
 @author: mb540
 """
@@ -35,7 +45,7 @@ x = np.random.randn(hidden_states, temp_orders_states)
 v = np.zeros((hidden_causes, temp_orders_states - 1))
 y = np.zeros((obs_states, temp_orders_states - 1))
 eta = np.zeros((hidden_causes, temp_orders_states - 1))
-eta[0, 0] = 2.
+eta[0, 0] = 0.
 
 # Free Energy definition #
 FE = np.zeros((iterations,))
@@ -62,7 +72,7 @@ dFdmu_gamma_z = np.zeros((obs_states, temp_orders_states))
 Dmu_x = np.zeros((hidden_states, temp_orders_states))
 # keep temp_orders_states-temp_orders_causes empty (= 0) to ease calculations
 Dmu_v = np.zeros((hidden_causes, temp_orders_states))
-eta_mu_x = .00001 * np.ones((hidden_states, temp_orders_states))
+eta_mu_x = .001 * np.ones((hidden_states, temp_orders_states))
 # keep temp_orders_states-temp_orders_causes empty (= 0) to ease calculations
 eta_mu_v = .00001 * np.ones((hidden_causes, temp_orders_states))
 eta_a = .01
@@ -71,7 +81,7 @@ eta_mu_gamma_z = .1
 # noise on sensory input
 gamma_z = -16 * np.ones((obs_states, temp_orders_states - 1))  # log-precisions
 gamma_z[0, 0] = 8
-gamma_z = 14 * np.ones((obs_states, temp_orders_states - 1))    # log-precisions
+gamma_z = 2 * np.ones((obs_states, temp_orders_states - 1))    # log-precisions
 pi_z = np.exp(gamma_z) * np.ones((obs_states, temp_orders_states - 1))
 # knock out terms that are not directly sensed
 # pi_z[:,1:] = np.exp(-16)*np.ones((obs_states,temp_orders_states-2))
@@ -82,7 +92,7 @@ for i in range(obs_states):
         z[:, i, j] = sigma_z[i, j] * np.random.randn(1, iterations)
 
 # noise on motion of hidden states
-gamma_w = 1                                                 # log-precision
+gamma_w = 8                                                 # log-precision
 pi_w = np.exp(gamma_w) * np.ones((hidden_states, temp_orders_states - 1))
 sigma_w = 1 / (np.sqrt(pi_w))
 w = np.zeros((iterations, hidden_states, temp_orders_states - 1))
@@ -252,7 +262,7 @@ for i in range(iterations):
 
     # update system
     mu_x += dt * (Dmu_x - eta_mu_x * dFdmu_x)
-#    mu_v[:, :-1] += dt * (Dmu_v[:, :-1] - eta_mu_v[:, :-1] * dFdmu_v[:, :-1])
+    mu_v[:, :-1] += dt * (Dmu_v[:, :-1] - eta_mu_v[:, :-1] * dFdmu_v[:, :-1])
 #    a += dt * - eta_a * dFda
 #    mu_gamma_z_dot += dt*-eta_mu_gamma_z*(dFdmu_gamma_z + 1*mu_gamma_z_dot)
 #    mu_gamma_z += dt*(mu_gamma_z_dot)
@@ -324,12 +334,12 @@ plt.xlabel('Time')
 plt.legend()
 fig4.savefig('fig4.eps', format='eps', dpi=1200)
 
-#plt.figure(5)
-#plt.suptitle('Beliefs about hidden causes')
-#for i in range(hidden_causes):
-#    for j in range(temp_orders_causes - 1):
-#        plt.subplot(hidden_causes, temp_orders_causes - 1,(temp_orders_causes - 1) * i + j + 1)
-#        plt.plot(range(iterations), v_history[:, i, j], 'b', range(iterations), mu_v_history[:, i, j], 'r', range(iterations), eta_history[:, i, j], 'k')
+plt.figure(5)
+plt.suptitle('Beliefs about hidden causes')
+for i in range(hidden_causes):
+    for j in range(temp_orders_causes - 1):
+        plt.subplot(hidden_causes, temp_orders_causes - 1,(temp_orders_causes - 1) * i + j + 1)
+        plt.plot(range(iterations), v_history[:, i, j], 'b', range(iterations), mu_v_history[:, i, j], 'r', range(iterations), eta_history[:, i, j], 'k')
 #
 #plt.figure(6)
 #plt.suptitle('Beliefs about hidden causes + action')
