@@ -172,8 +172,8 @@ def sensoryErrors(y, mu_x, mu_v, mu_gamma_z):
 
 def dynamicsErrors(mu_x, mu_v, mu_gamma_w):
     eps_w = mu_x[:, 1:] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)
-    # eps_w = np.zeros((hidden_states, temp_orders_states - 1)) - f_gm(mu_x[:, :-1],mu_v[:, :-1])
-    xi_w = pi_w * eps_w
+    pi_gamma_w = np.exp(mu_gamma_w) * np.ones((obs_states, temp_orders_states - 1))
+    xi_w = pi_gamma_w * eps_w
     return eps_w, xi_w
 
 

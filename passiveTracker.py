@@ -13,8 +13,8 @@ The generative process producing data is a simple OU process.
 import numpy as np
 import matplotlib.pyplot as plt
 
-dt = .01
-T = 10
+dt = .05
+T = 100
 iterations = int(T / dt)
 dx = np.exp(-8)
 
@@ -62,16 +62,16 @@ dFdmu_gamma_z = np.zeros((obs_states, temp_orders_states))
 Dmu_x = np.zeros((hidden_states, temp_orders_states))
 # keep temp_orders_states-temp_orders_causes empty (= 0) to ease calculations
 Dmu_v = np.zeros((hidden_causes, temp_orders_states))
-eta_mu_x = .00001 * np.ones((hidden_states, temp_orders_states))
+eta_mu_x = .0001 * np.ones((hidden_states, temp_orders_states))
 # keep temp_orders_states-temp_orders_causes empty (= 0) to ease calculations
 eta_mu_v = .00001 * np.ones((hidden_causes, temp_orders_states))
 eta_a = .01
-eta_mu_gamma_z = .1
+eta_mu_gamma_z = .001
 
 # noise on sensory input
 gamma_z = -16 * np.ones((obs_states, temp_orders_states - 1))  # log-precisions
 gamma_z[0, 0] = 8
-gamma_z = 14 * np.ones((obs_states, temp_orders_states - 1))    # log-precisions
+gamma_z = 15 * np.ones((obs_states, temp_orders_states - 1))    # log-precisions
 pi_z = np.exp(gamma_z) * np.ones((obs_states, temp_orders_states - 1))
 # knock out terms that are not directly sensed
 # pi_z[:,1:] = np.exp(-16)*np.ones((obs_states,temp_orders_states-2))
@@ -82,7 +82,7 @@ for i in range(obs_states):
         z[:, i, j] = sigma_z[i, j] * np.random.randn(1, iterations)
 
 # noise on motion of hidden states
-gamma_w = 1                                                 # log-precision
+gamma_w = 3 * np.ones((hidden_states, temp_orders_states - 1))    # log-precision
 pi_w = np.exp(gamma_w) * np.ones((hidden_states, temp_orders_states - 1))
 sigma_w = 1 / (np.sqrt(pi_w))
 w = np.zeros((iterations, hidden_states, temp_orders_states - 1))
@@ -162,8 +162,8 @@ def sensoryErrors(y, mu_x, mu_v, mu_gamma_z):
 
 def dynamicsErrors(mu_x, mu_v, mu_gamma_w):
     eps_w = mu_x[:, 1:] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)
-    # eps_w = np.zeros((hidden_states, temp_orders_states - 1)) - f_gm(mu_x[:, :-1],mu_v[:, :-1])
-    xi_w = pi_w * eps_w
+    pi_gamma_w = np.exp(mu_gamma_w) * np.ones((obs_states, temp_orders_states - 1))
+    xi_w = pi_gamma_w * eps_w
     return eps_w, xi_w
 
 
@@ -181,11 +181,12 @@ def FreeEnergy(y, mu_x, mu_v, mu_gamma_z, mu_gamma_w, eta):
                  np.trace(np.dot(eps_w, np.transpose(xi_w))) +
                  np.trace(np.dot(eps_n, np.transpose(xi_n))) -
                  np.log(np.prod(np.exp(mu_gamma_z[:, :-1])) *
-                        np.prod(pi_w) * np.prod(pi_n)))
+                        np.prod(np.exp(mu_gamma_w[:, :-1])) *
+                        np.prod(pi_n)))
 
 
 # forget about precisions momentarely
-mu_gamma_z[:, :-1] = gamma_z[0, 0] * np.ones((obs_states, temp_orders_states - 1))
+mu_gamma_z[:, :-1] = 13 * np.ones((obs_states, temp_orders_states - 1))
 mu_gamma_w = gamma_w
 mu_v[:, :-1] = eta
 #mu_gamma_z[0, 0] = -16.
@@ -254,8 +255,8 @@ for i in range(iterations):
     mu_x += dt * (Dmu_x - eta_mu_x * dFdmu_x)
 #    mu_v[:, :-1] += dt * (Dmu_v[:, :-1] - eta_mu_v[:, :-1] * dFdmu_v[:, :-1])
 #    a += dt * - eta_a * dFda
-#    mu_gamma_z_dot += dt*-eta_mu_gamma_z*(dFdmu_gamma_z + 1*mu_gamma_z_dot)
-#    mu_gamma_z += dt*(mu_gamma_z_dot)
+    mu_gamma_z_dot += dt*-eta_mu_gamma_z*(dFdmu_gamma_z + 8*(iterations)*mu_gamma_z_dot)
+    mu_gamma_z += dt*(mu_gamma_z_dot)
 #    mu_gamma_z_dot[0, 0] += dt * - eta_mu_gamma_z * (dFdmu_gamma_z[0, 0] + (i / iterations + .01) * mu_gamma_z_dot[0, 0])
 #    mu_gamma_z_dot[0, 0] += dt * - eta_mu_gamma_z * (.5 * (mu_gamma_z[0, 0] * xi_z[0, 0]*eps_z[0, 0] - 1) + (i / iterations + .01) * mu_gamma_z_dot[0, 0])
 #    mu_gamma_z[0, 0] += dt * (mu_gamma_z_dot[0, 0])
@@ -364,11 +365,11 @@ fig9.savefig('fig9.eps', format='eps', dpi=1200)
 #        plt.subplot(hidden_causes, (temp_orders_causes - 1) , (temp_orders_causes - 1) * i + j + 1)
 #        plt.plot(range(iterations), xi_n_history[:, i, j], 'b')
 
-#plt.figure(11)
-#plt.suptitle('Log-precisions, gamma_z')
-#for i in range(obs_states):
-#    for j in range(temp_orders_causes - 1):
-#        plt.subplot(obs_states,(temp_orders_causes - 1),(temp_orders_causes - 1) * i + j + 1)
-#        plt.plot(range(iterations), gamma_z[i, j] * np.ones(iterations,), 'b', range(iterations), mu_gamma_z_history[:, i, j], 'r')
+plt.figure(11)
+plt.suptitle('Log-precisions, gamma_z')
+for i in range(obs_states):
+    for j in range(temp_orders_causes - 1):
+        plt.subplot(obs_states,(temp_orders_causes - 1),(temp_orders_causes - 1) * i + j + 1)
+        plt.plot(range(iterations), gamma_z[i, j] * np.ones(iterations,), 'b', range(iterations), mu_gamma_z_history[:, i, j], 'r')
 
 plt.show()
