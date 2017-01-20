@@ -36,8 +36,8 @@ R = np.sqrt(X**2 + Y**2)
 Z = np.sin(R)
 
 # Plot the surface.
-surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
-                       linewidth=0, antialiased=False)
+surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
+                       linewidth=0, antialiased=True)
 
 # Customize the z axis.
 ax.set_zlim(-1.01, 1.01)
