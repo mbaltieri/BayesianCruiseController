@@ -141,7 +141,8 @@ def error_landscape(k1, k2, k3):
         action = np.zeros((1, temp_orders_states - 1))
         action[0, 0] = a
     #    return x - np.power(x,3) + w/np.sqrt(dt) + v
-        return v + w/np.sqrt(dt)
+#        return v + w/np.sqrt(dt)           # ou process with euler-maruyana method
+        return v + w
     
     
     def g_gm(x, v):
@@ -152,7 +153,7 @@ def error_landscape(k1, k2, k3):
     def f_gm(x, v, w):
         # return (force_drive(x, v) - force_disturbance(x, theta)) / m
     #    return - x + v
-        return f(x, v, w, .0)
+        return f(x, v, .0, .0)
     
     
     def getObservation(x, v, w, a):
@@ -169,7 +170,8 @@ def error_landscape(k1, k2, k3):
     
     
     def dynamicsErrors(mu_x, mu_v, mu_gamma_w):
-        eps_w = mu_x[:, 1:] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)
+#        eps_w = mu_x[:, 1:] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)          # ode's
+        eps_w = mu_x[:, :-1] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)          # static equations
         # eps_w = np.zeros((hidden_states, temp_orders_states - 1)) - f_gm(mu_x[:, :-1],mu_v[:, :-1])
         pi_gamma_w = np.exp(mu_gamma_w) * np.ones((obs_states, temp_orders_states - 1))
         xi_w = pi_gamma_w * eps_w
@@ -204,7 +206,7 @@ def error_landscape(k1, k2, k3):
     # mu_gamma_z[0, 1] = -16.
     
     for i in range(iterations):
-        print(i)
+#        print(i)
     
     #    v[:,0] = np.exp(-(i-iterations/4)**2/100**2)
         if (temp_orders_states > 2):
@@ -238,32 +240,33 @@ def error_landscape(k1, k2, k3):
                 Dmu_x[j, k] = np.copy(mu_x[j, k + 1])
     
         # causes
-        for j in range(hidden_causes):
-            for k in range(temp_orders_causes):
-                mu_v_temp = np.copy(mu_v)
-                mu_v_temp[j, k] += dx
-                dFdmu_v[j, k] = (FreeEnergy(rho, mu_x, mu_v_temp, mu_gamma_z, mu_gamma_w, eta) - FE[i]) / dx
-    
-        for j in range(hidden_causes):
-            for k in range(temp_orders_causes - 1):
-                Dmu_v[j, k] = np.copy(mu_v[j, k + 1])
+#        for j in range(hidden_causes):
+#            for k in range(temp_orders_causes):
+#                mu_v_temp = np.copy(mu_v)
+#                mu_v_temp[j, k] += dx
+#                dFdmu_v[j, k] = (FreeEnergy(rho, mu_x, mu_v_temp, mu_gamma_z, mu_gamma_w, eta) - FE[i]) / dx
+#    
+#        for j in range(hidden_causes):
+#            for k in range(temp_orders_causes - 1):
+#                Dmu_v[j, k] = np.copy(mu_v[j, k + 1])
     
         # precisions (only on sensors at the moment)
-        for j in range(obs_states):
-            for k in range(temp_orders_states-1):
-                mu_gamma_z_temp = np.copy(mu_gamma_z)
-                mu_gamma_z_temp[j, k] += dx
-                dFdmu_gamma_z[j, k] = (FreeEnergy(rho, mu_x, mu_v, mu_gamma_z_temp, mu_gamma_w, eta) - FE[i]) / dx
-    
+#        for j in range(obs_states):
+#            for k in range(temp_orders_states-1):
+#                mu_gamma_z_temp = np.copy(mu_gamma_z)
+#                mu_gamma_z_temp[j, k] += dx
+#                dFdmu_gamma_z[j, k] = (FreeEnergy(rho, mu_x, mu_v, mu_gamma_z_temp, mu_gamma_w, eta) - FE[i]) / dx
+#    
         # action
         # y_adx = getObservation(x_temp, v, a + dx)
         # rho_adx = y_adx + z[i, :, :]
         # FE_adx = FreeEnergy(rho_adx, mu_x, mu_v, eta)
         # dFda = (FE_adx - FE[i]) / dx
-        dFda = np.dot(xi_z, np.ones((temp_orders_states - 1, 1)))
+#        dFda = np.dot(xi_z, np.ones((temp_orders_states - 1, 1)))
     
         # update system
     #    mu_x += dt * (Dmu_x - eta_mu_x * dFdmu_x)
+        dFdmu_x2 = - xi_z + xi_w
         mu_x += dt * (- eta_mu_x * dFdmu_x)
     #    mu_v[:, :-1] += dt * (Dmu_v[:, :-1] - eta_mu_v[:, :-1] * dFdmu_v[:, :-1])
     #    a += dt * - eta_a * dFda
@@ -310,9 +313,10 @@ def error_landscape(k1, k2, k3):
 #    #plt.title('Free energy')
 #    plt.ylabel('Free energy')
 #    plt.xlabel('Time')
-#    fig2.savefig('fig2.eps', format='eps', dpi=1200)
+##    fig2.savefig('fig2.eps', format='eps', dpi=1200)
 #    
-#    fig3 = plt.figure(3)
+##    fig3 = plt.figure(3)
+#    plt.figure()
 #    #plt.suptitle('Beliefs about observable states')
 ##    y_reconstructed = np.zeros((iterations, obs_states, temp_orders_states - 1))
 #    #for i in range(iterations):
@@ -324,6 +328,7 @@ def error_landscape(k1, k2, k3):
 #            plt.plot(np.arange(0, iterations*dt, dt), mu_x_history[:, i, j], 'r', label='Agent\'s belief')
 #            plt.plot(np.arange(0, iterations*dt, dt), y_history[:, i, j], 'g', label='De-noised sensory data')
 #    plt.xlabel('Time')
+#    plt.title('Gamma_z: ' + str(mu_gamma_z[0,0]) + ', Gamma_w: ' + str(mu_gamma_w[0,0]))
 #    plt.legend()
 #    fig3.savefig('fig3.eps', format='eps', dpi=1200)
 #    
@@ -360,8 +365,8 @@ def error_landscape(k1, k2, k3):
 #            plt.subplot(obs_states, (temp_orders_states - 1), (temp_orders_states - 1) * i + j + 1)
 #            plt.plot(np.arange(0, iterations*dt, dt), xi_z_history[:, i, j], 'b')
 #    plt.xlabel('Time')
-#    fig8.savefig('fig8.eps', format='eps', dpi=1200)
-#    
+##    fig8.savefig('fig8.eps', format='eps', dpi=1200)
+##    
 #    fig9 = plt.figure(9)
 #    plt.suptitle('(Weighted) Top-down errors, hidden states, xi_w')
 #    for i in range(hidden_states):
@@ -389,34 +394,42 @@ def error_landscape(k1, k2, k3):
     
     return 1/iterations * np.sum((y_history - mu_x_history[:,:,0])**2)
 
+simulations = 1
 points_number = 10
 
 k2_range_inf = 6.0
-k2_range_sup = 12.0
+k2_range_sup = 10.0
 
-k3_range_inf = 8.0
-k3_range_sup = 14.0
+k3_range_inf = 10.0
+k3_range_sup = 24.0
 
 k2_range = np.arange(k2_range_inf, k2_range_sup, (k2_range_sup-k2_range_inf) / points_number)
 k3_range = np.arange(k3_range_inf, k3_range_sup, (k3_range_sup-k3_range_inf) / points_number)
 
-error = np.zeros((points_number,points_number))
+error = np.zeros((simulations, points_number, points_number))
 
-k1 = .000001
-for i in range(points_number):
-    for j in range(points_number):
-        print(i,j)
-        error[i,j] = error_landscape(.0001, k2_range[i], k3_range[i])
-        
+k1 = .0001
 plt.close('all')
+for i in range(simulations):
+    for j in range(points_number):
+        for k in range(points_number):
+            print(i,j,k)
+            error[i,j,k] = error_landscape(k1, k2_range[j], k3_range[k])
 
-fig = plt.figure(0)
+#error[0,0,0] = error_landscape(k1, 8, 12)
+error_avg = np.mean(error, axis=0)
+error_avg[error_avg > 1] = 1
+#plt.close('all')
+
+fig = plt.figure()
 ax = fig.gca(projection='3d')
 k2_range, k3_range = np.meshgrid(k2_range, k3_range)
-surf = ax.plot_surface(k2_range, k3_range, error)
+surf = ax.plot_surface(k2_range, k3_range, error_avg, rstride=1, cstride=1, cmap='jet')
 ax.set_xlabel('Sensory log-precision')
 ax.set_ylabel('Dynamic log-precision')
 ax.set_zlabel('MSE')
+
+fig.colorbar(surf, shrink=0.5, aspect=5)
 
 
 
