@@ -90,7 +90,7 @@ def error_landscape(k1, k2, k3):
             z[:, i, j] = sigma_z[i, j] * np.random.randn(1, iterations)
     
     # noise on motion of hidden states
-    gamma_w = 12 * np.ones((hidden_states, temp_orders_states - 1))    # log-precision
+    gamma_w = 10 * np.ones((hidden_states, temp_orders_states - 1))    # log-precision
     pi_w = np.exp(gamma_w) * np.ones((hidden_states, temp_orders_states - 1))
     sigma_w = 1 / (np.sqrt(pi_w))
     w = np.zeros((iterations, hidden_states, temp_orders_states - 1))
@@ -141,12 +141,11 @@ def error_landscape(k1, k2, k3):
         action = np.zeros((1, temp_orders_states - 1))
         action[0, 0] = a
     #    return x - np.power(x,3) + w/np.sqrt(dt) + v
-#        return v + w/np.sqrt(dt)           # ou process with euler-maruyana method
+#        return - x + w/np.sqrt(dt)           # ou process with euler-maruyana method
         return v + w
     
     
     def g_gm(x, v):
-    #    return g(x, v)
         return g(x, v)
     
     
@@ -157,7 +156,8 @@ def error_landscape(k1, k2, k3):
     
     
     def getObservation(x, v, w, a):
-    #    x[:, 1:] = f(x[:, :-1], v, w, a)  # + w[i, 1:, :]
+#        x[:, 1:] = f(x[:, :-1], v, w, a)  # + w[i, 1:, :]
+#        x[:, 0] += dt * x[:, 1]
         x[:, 0] = f(x[:, :-1], v, w, a)
         return g(x[:, :-1], v)  # + np.squeeze(z[i, :, :])
     
@@ -330,7 +330,7 @@ def error_landscape(k1, k2, k3):
 #    plt.xlabel('Time')
 #    plt.title('Gamma_z: ' + str(mu_gamma_z[0,0]) + ', Gamma_w: ' + str(mu_gamma_w[0,0]))
 #    plt.legend()
-#    fig3.savefig('fig3.eps', format='eps', dpi=1200)
+##    fig3.savefig('fig3.eps', format='eps', dpi=1200)
 #    
 #    fig4 = plt.figure(4)
 #    #plt.suptitle('Beliefs about hidden states')
@@ -374,7 +374,7 @@ def error_landscape(k1, k2, k3):
 #            plt.subplot(hidden_states, (temp_orders_states - 1), (temp_orders_states - 1) * i + j + 1 )
 #            plt.plot(np.arange(0, iterations*dt, dt), xi_w_history[:, i, j], 'b')
 #    plt.xlabel('Time')
-#    fig9.savefig('fig9.eps', format='eps', dpi=1200)
+##    fig9.savefig('fig9.eps', format='eps', dpi=1200)
     
     #plt.figure(10)
     #plt.suptitle('(Weighted) Top-down errors, hidden causes, xi_n')
@@ -394,21 +394,21 @@ def error_landscape(k1, k2, k3):
     
     return 1/iterations * np.sum((y_history - mu_x_history[:,:,0])**2)
 
-simulations = 1
-points_number = 10
+simulations = 10
+points_number = 20
 
-k2_range_inf = 6.0
-k2_range_sup = 10.0
+k2_range_inf = 4.0
+k2_range_sup = 9.0
 
-k3_range_inf = 10.0
-k3_range_sup = 24.0
+k3_range_inf = 8.0
+k3_range_sup = 10.3
 
 k2_range = np.arange(k2_range_inf, k2_range_sup, (k2_range_sup-k2_range_inf) / points_number)
 k3_range = np.arange(k3_range_inf, k3_range_sup, (k3_range_sup-k3_range_inf) / points_number)
 
 error = np.zeros((simulations, points_number, points_number))
 
-k1 = .0001
+k1 = .001
 plt.close('all')
 for i in range(simulations):
     for j in range(points_number):
@@ -416,14 +416,14 @@ for i in range(simulations):
             print(i,j,k)
             error[i,j,k] = error_landscape(k1, k2_range[j], k3_range[k])
 
-#error[0,0,0] = error_landscape(k1, 8, 12)
+#error[0,0,0] = error_landscape(k1, 8.4, 10.8)
 error_avg = np.mean(error, axis=0)
 error_avg[error_avg > 1] = 1
 #plt.close('all')
 
 fig = plt.figure()
 ax = fig.gca(projection='3d')
-k2_range, k3_range = np.meshgrid(k2_range, k3_range)
+k3_range, k2_range = np.meshgrid(k3_range, k2_range)
 surf = ax.plot_surface(k2_range, k3_range, error_avg, rstride=1, cstride=1, cmap='jet')
 ax.set_xlabel('Sensory log-precision')
 ax.set_ylabel('Dynamic log-precision')
