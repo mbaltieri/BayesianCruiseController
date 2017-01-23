@@ -39,16 +39,17 @@ def error_landscape(k1, k2, k3):
     
     x = np.zeros((hidden_states, temp_orders_states))
     x = np.random.randn(hidden_states, temp_orders_states)
+    x = np.ones((hidden_states, temp_orders_states))
     # keep temp_orders_states-temp_orders_causes empty (= 0) to ease calculations
     v = np.zeros((hidden_causes, temp_orders_states - 1))
     y = np.zeros((obs_states, temp_orders_states - 1))
     eta = np.zeros((hidden_causes, temp_orders_states - 1))
-    eta[0, 0] = .1
+    eta[0, 0] = 1.0
     
     # Free Energy definition #
     FE = np.zeros((iterations,))
     
-    #mu_x = np.random.randn(hidden_states, temp_orders_states)
+    mu_x = np.random.randn(hidden_states, temp_orders_states)
     mu_x = np.zeros((hidden_states, temp_orders_states))
     # keep temp_orders_states-temp_orders_causes empty (= 0) to ease calculations
     mu_v = np.random.randn(hidden_causes, temp_orders_states)
@@ -79,7 +80,7 @@ def error_landscape(k1, k2, k3):
     # noise on sensory input
     gamma_z = -16 * np.ones((obs_states, temp_orders_states - 1))  # log-precisions
     gamma_z[0, 0] = 8
-    gamma_z = 8 * np.ones((obs_states, temp_orders_states - 1))    # log-precisions
+    gamma_z = 4 * np.ones((obs_states, temp_orders_states - 1))    # log-precisions
     pi_z = np.exp(gamma_z) * np.ones((obs_states, temp_orders_states - 1))
     # knock out terms that are not directly sensed
     # pi_z[:,1:] = np.exp(-16)*np.ones((obs_states,temp_orders_states-2))
@@ -90,7 +91,7 @@ def error_landscape(k1, k2, k3):
             z[:, i, j] = sigma_z[i, j] * np.random.randn(1, iterations)
     
     # noise on motion of hidden states
-    gamma_w = 10 * np.ones((hidden_states, temp_orders_states - 1))    # log-precision
+    gamma_w = 6 * np.ones((hidden_states, temp_orders_states - 1))    # log-precision
     pi_w = np.exp(gamma_w) * np.ones((hidden_states, temp_orders_states - 1))
     sigma_w = 1 / (np.sqrt(pi_w))
     w = np.zeros((iterations, hidden_states, temp_orders_states - 1))
@@ -170,8 +171,8 @@ def error_landscape(k1, k2, k3):
     
     
     def dynamicsErrors(mu_x, mu_v, mu_gamma_w):
-#        eps_w = mu_x[:, 1:] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)          # ode's
-        eps_w = mu_x[:, :-1] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)          # static equations
+        eps_w = mu_x[:, 1:] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)          # ode's
+#        eps_w = mu_x[:, :-1] - f_gm(mu_x[:, :-1], mu_v[:, :-1], mu_gamma_w)          # static equations
         # eps_w = np.zeros((hidden_states, temp_orders_states - 1)) - f_gm(mu_x[:, :-1],mu_v[:, :-1])
         pi_gamma_w = np.exp(mu_gamma_w) * np.ones((obs_states, temp_orders_states - 1))
         xi_w = pi_gamma_w * eps_w
@@ -229,15 +230,15 @@ def error_landscape(k1, k2, k3):
         eps_n, xi_n = priorErrors(mu_v, eta)
     
         # hidden states
-        for j in range(hidden_states):
-            for k in range(temp_orders_states):
-                mu_x_temp = np.copy(mu_x)
-                mu_x_temp[j, k] += dx
-                dFdmu_x[j, k] = (FreeEnergy(rho, mu_x_temp, mu_v, mu_gamma_z, mu_gamma_w, eta) - FE[i]) / dx
-    
-        for j in range(hidden_states):
-            for k in range(temp_orders_states - 1):
-                Dmu_x[j, k] = np.copy(mu_x[j, k + 1])
+#        for j in range(hidden_states):
+#            for k in range(temp_orders_states):
+#                mu_x_temp = np.copy(mu_x)
+#                mu_x_temp[j, k] += dx
+#                dFdmu_x[j, k] = (FreeEnergy(rho, mu_x_temp, mu_v, mu_gamma_z, mu_gamma_w, eta) - FE[i]) / dx
+#    
+#        for j in range(hidden_states):
+#            for k in range(temp_orders_states - 1):
+#                Dmu_x[j, k] = np.copy(mu_x[j, k + 1])
     
         # causes
 #        for j in range(hidden_causes):
@@ -267,7 +268,7 @@ def error_landscape(k1, k2, k3):
         # update system
     #    mu_x += dt * (Dmu_x - eta_mu_x * dFdmu_x)
         dFdmu_x2 = - xi_z + xi_w
-        mu_x += dt * (- eta_mu_x * dFdmu_x)
+        mu_x += dt * (- eta_mu_x * dFdmu_x2)
     #    mu_v[:, :-1] += dt * (Dmu_v[:, :-1] - eta_mu_v[:, :-1] * dFdmu_v[:, :-1])
     #    a += dt * - eta_a * dFda
     #    mu_gamma_z_dot += dt*-eta_mu_gamma_z*(dFdmu_gamma_z + 8*(iterations)*mu_gamma_z_dot)
@@ -391,24 +392,27 @@ def error_landscape(k1, k2, k3):
     #        plt.plot(range(iterations), gamma_z[i, j] * np.ones(iterations,), 'b', range(iterations), mu_gamma_z_history[:, i, j], 'r')
     
 #    plt.show()
+#    plt.figure()
+#    aa = y_history[:,0,0] - mu_x_history[:,0,0]
+#    plt.plot(y_history[:,0,0] - mu_x_history[:,0,0])
     
-    return 1/iterations * np.sum((y_history - mu_x_history[:,:,0])**2)
+    return 1/iterations * np.sum((y_history[:,0,0] - mu_x_history[:,0,0])**2)
 
 simulations = 10
-points_number = 20
+points_number = 10
 
-k2_range_inf = 4.0
-k2_range_sup = 9.0
+k2_range_inf = 3.0
+k2_range_sup = 6.0
 
-k3_range_inf = 8.0
-k3_range_sup = 10.3
+k3_range_inf = 5.0
+k3_range_sup = 7.0
 
 k2_range = np.arange(k2_range_inf, k2_range_sup, (k2_range_sup-k2_range_inf) / points_number)
 k3_range = np.arange(k3_range_inf, k3_range_sup, (k3_range_sup-k3_range_inf) / points_number)
 
 error = np.zeros((simulations, points_number, points_number))
 
-k1 = .001
+k1 = .03
 plt.close('all')
 for i in range(simulations):
     for j in range(points_number):
@@ -416,11 +420,11 @@ for i in range(simulations):
             print(i,j,k)
             error[i,j,k] = error_landscape(k1, k2_range[j], k3_range[k])
 
-#error[0,0,0] = error_landscape(k1, 8.4, 10.8)
+#error[0,0,0] = error_landscape(k1, 5, 7)
 error_avg = np.mean(error, axis=0)
-error_avg[error_avg > 1] = 1
+#error_avg[error_avg > 1] = 1
 #plt.close('all')
-
+#
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 k3_range, k2_range = np.meshgrid(k3_range, k2_range)
