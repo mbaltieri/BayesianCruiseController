@@ -398,45 +398,80 @@ def error_landscape(k1, k2, k3):
     
     return 1/iterations * np.sum((y_history[:,0,0] - mu_x_history[:,0,0])**2)
 
-simulations = 10
+simulations = 1
 points_number = 10
+l_rate_number = 10
+
+k1_range_inf = .003
+k1_range_sup = .029
 
 k2_range_inf = 3.0
-k2_range_sup = 6.0
+k2_range_sup = 5
 
-k3_range_inf = 5.0
-k3_range_sup = 7.0
+k3_range_inf = 4.5
+k3_range_sup = 7.5
 
-k2_range = np.arange(k2_range_inf, k2_range_sup, (k2_range_sup-k2_range_inf) / points_number)
-k3_range = np.arange(k3_range_inf, k3_range_sup, (k3_range_sup-k3_range_inf) / points_number)
+k1_range = np.arange(k1_range_inf, k1_range_sup, (k1_range_sup - k1_range_inf) / l_rate_number)
+#k1_range = [.003, .005, .007, .01, .03]
+k2_range = np.arange(k2_range_inf, k2_range_sup, (k2_range_sup - k2_range_inf) / points_number)
+k3_range = np.arange(k3_range_inf, k3_range_sup, (k3_range_sup - k3_range_inf) / points_number)
 
-error = np.zeros((simulations, points_number, points_number))
+error = np.zeros((simulations, l_rate_number, points_number, points_number))
 
 k1 = .03
 plt.close('all')
 for i in range(simulations):
-    for j in range(points_number):
+    for j in range(l_rate_number):
         for k in range(points_number):
-            print(i,j,k)
-            error[i,j,k] = error_landscape(k1, k2_range[j], k3_range[k])
+            for l in range(points_number):
+                print(i, j, k, l)
+                error[i, j, k, l] = error_landscape(k1_range[j], k2_range[k], k3_range[l])
 
 #error[0,0,0] = error_landscape(k1, 5, 7)
 error_avg = np.mean(error, axis=0)
 #error_avg[error_avg > 1] = 1
 #plt.close('all')
 #
+
+log_precision_rate = k2_range / k3_range
+k3_range, k2_range = np.meshgrid(k3_range, k2_range)
+#for i in range(l_rate_number):
+#    fig = plt.figure()
+#    ax = fig.gca(projection='3d')
+#    plt.hold(True)
+#    surf = ax.plot_surface(k2_range, k3_range, error_avg[i, :, :], rstride=1, cstride=1, cmap='jet', alpha = .6)
+#    ax.set_xlabel('Sensory log-precision')
+#    ax.set_ylabel('Dynamic log-precision')
+#    ax.set_zlabel('MSE')
+#    ax.scatter(k2_range[3,0], k3_range[0,5], error_avg[i, 3, 5], color='r', s = 200) 
+#    ax.text(k2_range[3,0], k3_range[0,5], error_avg[i, 3, 5],  '%s' % 'True precisions', size=20, zorder=1, color='k') 
+#    plt.title('Learning rate: ' + str(k1_range[i]))
+#    
+#    fig.colorbar(surf, shrink=0.5, aspect=5)
+    
+
 fig = plt.figure()
 ax = fig.gca(projection='3d')
-k3_range, k2_range = np.meshgrid(k3_range, k2_range)
-surf = ax.plot_surface(k2_range, k3_range, error_avg, rstride=1, cstride=1, cmap='jet')
-ax.set_xlabel('Sensory log-precision')
-ax.set_ylabel('Dynamic log-precision')
+#log_precision_rate = k2_range / k3_range
+#log_precision_rate = np.reshape(log_precision_rate, (points_number * points_number))
+#order = np.argsort(log_precision_rate)
+x_range = range(points_number)
+y_range = k1_range
+x_range, y_range = np.meshgrid(x_range, y_range)
+#error_ratios = np.reshape(error_avg, (l_rate_number, points_number * points_number))
+
+error_ratios = np.diagonal(error_avg, axis1=1, axis2=2)
+#error_ratios[error_ratios > .1] = .1
+
+#y_sorted = np.zeros((l_rate_number, points_number * points_number))
+#for i in range(l_rate_number):
+#    y_sorted[i, :] = np.squeeze(np.array(error_ratios[i, :])[order])
+surf = ax.plot_surface(x_range, y_range, error_ratios, rstride=1, cstride=1, cmap='jet')
+ax.set_xlabel('Pi_z / pi_w')
+ax.set_ylabel('Learning rate')
 ax.set_zlabel('MSE')
 
 fig.colorbar(surf, shrink=0.5, aspect=5)
-
-
-
 
 
 
