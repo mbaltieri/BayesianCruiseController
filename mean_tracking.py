@@ -21,7 +21,7 @@ from matplotlib import cm
 
 def error_landscape(k1, k2, k3):
     
-    dt = .05
+    dt = .04
     T = 10
     iterations = int(T / dt)
     dx = np.exp(-8)
@@ -268,6 +268,8 @@ def error_landscape(k1, k2, k3):
         # update system
     #    mu_x += dt * (Dmu_x - eta_mu_x * dFdmu_x)
         dFdmu_x2 = - xi_z + xi_w
+#        dFdmu_x2 = mu_x * (np.exp(mu_gamma_z) + np.exp(mu_gamma_w)) - np.exp(mu_gamma_z) * rho
+#        dFdmu_x2 = np.exp(mu_gamma_z) * (rho - mu_x) * - 1 + np.exp(mu_gamma_w) * mu_x
         mu_x += dt * (- eta_mu_x * dFdmu_x2)
     #    mu_v[:, :-1] += dt * (Dmu_v[:, :-1] - eta_mu_v[:, :-1] * dFdmu_v[:, :-1])
     #    a += dt * - eta_a * dFda
@@ -427,7 +429,7 @@ for i in range(simulations):
                 print(i, j, k, l)
                 error[i, j, k, l] = error_landscape(k1_range[j], k2_range[k], k3_range[l])
 
-#error[0,0,0] = error_landscape(k1, 5, 7)
+#error[0,0,0] = error_landscape(.01, 5, 10)
 error_avg = np.mean(error, axis=0)
 #error_avg[error_avg > 1] = 1
 #plt.close('all')
