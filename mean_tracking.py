@@ -273,7 +273,7 @@ def error_landscape(k1, k2, k3):
         # update system
     #    mu_x += dt * (Dmu_x - eta_mu_x * dFdmu_x)
         dFdmu_x2 = - xi_z + xi_w
-        dFdmu_x2 = mu_x * (np.exp(mu_gamma_z) + np.exp(mu_gamma_w)) - np.exp(mu_gamma_z) * rho / np.sqrt(dt)
+        dFdmu_x2 = mu_x * (np.exp(mu_gamma_z) + np.exp(mu_gamma_w)) - np.exp(mu_gamma_z) * rho# / np.sqrt(dt)
 #        dFdmu_x2 = np.exp(mu_gamma_z) * (rho - mu_x) * - 1 + np.exp(mu_gamma_w) * mu_x
         mu_x += dt * (- eta_mu_x * dFdmu_x2)
     #    mu_v[:, :-1] += dt * (Dmu_v[:, :-1] - eta_mu_v[:, :-1] * dFdmu_v[:, :-1])
