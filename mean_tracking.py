@@ -21,7 +21,7 @@ from matplotlib import cm
 
 def error_landscape(k1, k2, k3):
     
-    dt = .04
+    dt = .02
     T = 10
     iterations = int(T / dt)
     dx = np.exp(-8)
@@ -51,7 +51,7 @@ def error_landscape(k1, k2, k3):
     
     mu_x = np.random.randn(hidden_states, temp_orders_states)
     mu_x = np.zeros((hidden_states, temp_orders_states))
-    mu_x = np.ones((hidden_states, temp_orders_states))
+#    mu_x = np.ones((hidden_states, temp_orders_states))
     # keep temp_orders_states-temp_orders_causes empty (= 0) to ease calculations
     mu_v = np.random.randn(hidden_causes, temp_orders_states)
     #mu_v = np.zeros((hidden_causes, temp_orders_states))
@@ -275,7 +275,7 @@ def error_landscape(k1, k2, k3):
         dFdmu_x2 = - xi_z + xi_w
         dFdmu_x2 = mu_x * (np.exp(mu_gamma_z) + np.exp(mu_gamma_w)) - np.exp(mu_gamma_z) * rho / np.sqrt(dt)
 #        dFdmu_x2 = np.exp(mu_gamma_z) * (rho - mu_x) * - 1 + np.exp(mu_gamma_w) * mu_x
-        mu_x += dt * (- eta_mu_x * dFdmu_x)
+        mu_x += dt * (- eta_mu_x * dFdmu_x2)
     #    mu_v[:, :-1] += dt * (Dmu_v[:, :-1] - eta_mu_v[:, :-1] * dFdmu_v[:, :-1])
     #    a += dt * - eta_a * dFda
     #    mu_gamma_z_dot += dt*-eta_mu_gamma_z*(dFdmu_gamma_z + 8*(iterations)*mu_gamma_z_dot)
@@ -323,23 +323,23 @@ def error_landscape(k1, k2, k3):
 #    plt.xlabel('Time')
 ##    fig2.savefig('fig2.eps', format='eps', dpi=1200)
 #    
-#    fig3 = plt.figure(3)
-    plt.figure()
-    #plt.suptitle('Beliefs about observable states')
-#    y_reconstructed = np.zeros((iterations, obs_states, temp_orders_states - 1))
-    #for i in range(iterations):
-    #    y_reconstructed[i, :, :] = g_gm(mu_x_history[i, :, :-1], mu_v_history[i, :, :-1])
-    for i in range(hidden_states):
-        for j in range(temp_orders_states - 1):
-            plt.subplot(hidden_states, temp_orders_states - 1, (temp_orders_states - 1) * i + j + 1)
-            plt.plot(np.arange(0, iterations*dt, dt), rho_history[:, i, j], 'b', label='Sensory data')
-            plt.plot(np.arange(0, iterations*dt, dt), mu_x_history[:, i, j], 'r', label='Agent\'s belief')
-            plt.plot(np.arange(0, iterations*dt, dt), y_history[:, i, j], 'g', label='De-noised sensory data')
-    plt.xlabel('Time')
-    plt.title('Gamma_z: ' + str(mu_gamma_z[0,0]) + ', Gamma_w: ' + str(mu_gamma_w[0,0]))
-    plt.legend()
-#    fig3.savefig('fig3.eps', format='eps', dpi=1200)
-#    
+##    fig3 = plt.figure(3)
+#    plt.figure()
+#    #plt.suptitle('Beliefs about observable states')
+##    y_reconstructed = np.zeros((iterations, obs_states, temp_orders_states - 1))
+#    #for i in range(iterations):
+#    #    y_reconstructed[i, :, :] = g_gm(mu_x_history[i, :, :-1], mu_v_history[i, :, :-1])
+#    for i in range(hidden_states):
+#        for j in range(temp_orders_states - 1):
+#            plt.subplot(hidden_states, temp_orders_states - 1, (temp_orders_states - 1) * i + j + 1)
+#            plt.plot(np.arange(0, iterations*dt, dt), rho_history[:, i, j], 'b', label='Sensory data')
+#            plt.plot(np.arange(0, iterations*dt, dt), mu_x_history[:, i, j], 'r', label='Agent\'s belief')
+#            plt.plot(np.arange(0, iterations*dt, dt), y_history[:, i, j], 'g', label='De-noised sensory data')
+#    plt.xlabel('Time')
+#    plt.title('Gamma_z: ' + str(mu_gamma_z[0,0]) + ', Gamma_w: ' + str(mu_gamma_w[0,0]))
+#    plt.legend()
+##    fig3.savefig('fig3.eps', format='eps', dpi=1200)
+##    
 #    fig4 = plt.figure(4)
 #    #plt.suptitle('Beliefs about hidden states')
 #    for i in range(hidden_states):
@@ -405,21 +405,22 @@ def error_landscape(k1, k2, k3):
 
 #    print(np.var(mu_x_history[:, 0, 0]))
 
-    print(np.var(mu_x_history[:,0,0]))
+#    print(np.var(mu_x_history[:,0,0]))
 #    print(np.var(y_history[:,0,0]))
     
+#    print(1/iterations * np.sum((y_history[:,0,0] - mu_x_history[:,0,0])**2))
     return 1/iterations * np.sum((y_history[:,0,0] - mu_x_history[:,0,0])**2)
 
 #real sensory precision = exp(4) ~= 54.59815003
 #real dynamic precision = exp(6) ~= 403.4287935                            
 
 
-simulations = 10
+simulations = 1
 points_number = 10
 l_rate_number = 1
 
-k1_range_inf = .0002
-k1_range_sup = .032
+k1_range_inf = .08
+k1_range_sup = .2
 
 k2_range_inf = 3.0
 k2_range_sup = 5
@@ -427,11 +428,11 @@ k2_range_sup = 5
 k3_range_inf = 4.5
 k3_range_sup = 7.6
 
-magnitude_sup = 2.5
-magnitude_inf = .5
+magnitude_sup = 40.
+magnitude_inf = 0.
 
-ratio_sup = 80
-ratio_inf = 20
+ratio_sup = .2
+ratio_inf = .01
 
 magnitude = np.arange(magnitude_inf, magnitude_sup, (magnitude_sup - magnitude_inf) / points_number)
 ratio = np.arange(ratio_inf, ratio_sup, (ratio_sup - ratio_inf) / points_number)
@@ -447,46 +448,46 @@ prec_1 = np.zeros((points_number,))
 prec_2 = np.zeros((points_number))
 
 k1 = .03
-#plt.close('all')
-#for i in range(simulations):
-#    for j in range(l_rate_number):
-#        for k in range(points_number):
-#            for l in range(points_number):
-#                print(i, j, k, l)
-##                error[i, j, k, l] = error_landscape(k1_range[j], k2_range[k], k3_range[l])
-#                prec_1[k] = magnitude[k] / k1_range[j]
-#                prec_2[l] = magnitude[k] * ratio[l] / k1_range[j]
-#                error[i, j, k, l] = error_landscape(k1_range[j], np.log(prec_1[k]), np.log(prec_2[l]))
-##                error[i, j, k, l] = error_landscape(.02, 4, 6)
+plt.close('all')
+for i in range(simulations):
+    for j in range(l_rate_number):
+        for k in range(points_number):
+            for l in range(points_number):
+                print(i, j, k, l)
+#                error[i, j, k, l] = error_landscape(k1_range[j], k2_range[k], k3_range[l])
+                prec_2[k] = magnitude[k] / k1_range[j]
+                prec_1[l] = ratio[l] * prec_2[k]
+                error[i, j, k, l] = error_landscape(k1_range[j], np.log(prec_1[l]), np.log(prec_2[k]))
+#                error[i, j, k, l] = error_landscape(.02, 4, 6)
 
-error[0,0,0] = error_landscape(.02, 4, 6)
+#error[0,0,0] = error_landscape(.08, 4, 2.5)
 error_avg = np.mean(error, axis=0)
 #error_avg[error_avg > 1] = 1
 #plt.close('all')
 #
 
-## fix learning rate and project onto a 3d plot with magnitude vs ratio of precisions
-#
-##magnitude, ratio = np.meshgrid(magnitude, ratio)
-#ratio, magnitude = np.meshgrid(ratio, magnitude)
-#
-#fig = plt.figure()
-#ax = fig.gca(projection='3d')
-#surf = ax.plot_surface(magnitude, ratio, error_avg[0, :, :], rstride=1, cstride=1, cmap='jet', alpha = .6)
-#ax.set_xlabel('Magnitude')
-#ax.set_ylabel('Ratio')
-#ax.set_zlabel('MSE')
-##plt.title('Learning rate: ' + str(k1_range[i]))
-#
-#cbar = fig.colorbar(surf, shrink=0.5, aspect=5)
-#
-#colorbar_range = np.arange(.001, .01, .001)
-#
-#log_precision_rate = k2_range / k3_range
-#k3_range, k2_range = np.meshgrid(k3_range, k2_range)
-#
-#prec_2, prec_1 = np.meshgrid(prec_2, prec_1)
-#
+# fix learning rate and project onto a 3d plot with magnitude vs ratio of precisions
+
+#magnitude, ratio = np.meshgrid(magnitude, ratio)
+ratio, magnitude = np.meshgrid(ratio, magnitude)
+
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+surf = ax.plot_surface(magnitude, ratio, error_avg[0, :, :], rstride=1, cstride=1, cmap='jet', alpha = .6)
+ax.set_xlabel('Magnitude')
+ax.set_ylabel('Ratio')
+ax.set_zlabel('MSE')
+#plt.title('Learning rate: ' + str(k1_range[i]))
+
+cbar = fig.colorbar(surf, shrink=0.5, aspect=5)
+
+colorbar_range = np.arange(.001, .01, .001)
+
+log_precision_rate = k2_range / k3_range
+k3_range, k2_range = np.meshgrid(k3_range, k2_range)
+
+prec_2, prec_1 = np.meshgrid(prec_2, prec_1)
+
 #optimal_prec_position = points_number/2
 #for i in range(l_rate_number):
 #    fig = plt.figure()
@@ -505,8 +506,8 @@ error_avg = np.mean(error, axis=0)
 #    
 #    cbar = fig.colorbar(surf, shrink=0.5, aspect=5)
 #    #cbar.ax.set_yticklabels(['bau']) 
-#    
-#
+    
+
 #fig = plt.figure()
 #ax = fig.gca(projection='3d')
 ##log_precision_rate = k2_range / k3_range
@@ -529,21 +530,28 @@ error_avg = np.mean(error, axis=0)
 #ax.set_zlabel('MSE')
 #
 #fig.colorbar(surf, shrink=0.5, aspect=5)
+
+#plt.figure()
+#plt.plot(np.diagonal(error_constant_ratio, axis1=0, axis2=1))
 #
-##plt.figure()
-##plt.plot(np.diagonal(error_constant_ratio, axis1=0, axis2=1))
-##
-##
-##log_precision_rate = k2_range / k3_range
-##log_precision_rate = np.reshape(log_precision_rate, (points_number * points_number))
-##order = np.argsort(log_precision_rate)
-##
-##error_ratios = np.reshape(error_avg, (l_rate_number, points_number * points_number))
-##error_ratios = np.array(error_ratios[0,:])[order]
-##
-##plt.figure()
-##plt.scatter(log_precision_rate, error_ratios)
 #
+#log_precision_rate = k2_range / k3_range
+#log_precision_rate = np.reshape(log_precision_rate, (points_number * points_number))
+#order = np.argsort(log_precision_rate)
+#
+#error_ratios = np.reshape(error_avg, (l_rate_number, points_number * points_number))
+#error_ratios = np.array(error_ratios[0,:])[order]
 #
 #plt.figure()
-#plt.plot(ratio[8,:], error_avg[0, 8, :])
+#plt.scatter(log_precision_rate, error_ratios)
+
+
+plt.figure()
+plt.plot(ratio[8,:], error_avg[0, :, :])
+plt.xlabel('Ratio')
+plt.ylabel('MSE')
+
+
+
+
+
