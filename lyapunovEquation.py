@@ -17,9 +17,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 dt = .05
-T = 60
+T = 600
 iterations = int(T / dt)
 #np.random.seed(42)
+
+beta = .1
     
 k = .001
 points = 20
@@ -49,8 +51,8 @@ for i in range(points):
         pi_z = pi_z_range[i]
         pi_w = pi_w_range[j]
 
-        C = np.array([[- k * (pi_z + pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w, - k * pi_w, 0], [0, 0, - 1]])
-        SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / pi_w_true]])
+        C = np.array([[- k * (pi_z + beta * pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w * beta, - k * pi_w, 0], [0, 0, - beta]])
+        SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, beta ** 2 / pi_w_true]])
         #eigValues, eigVectors = np.linalg.eig(C)        
         OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
         
@@ -100,8 +102,8 @@ for i in range(points):
         M = M_range[i]
         R = R_range[j]
 
-        C = np.array([[- M * (R + 1), 1 - M, M * R], [- M, - M, 0], [0, 0, - 1]])
-        SIGMA = - np.array([[(M * R) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / pi_w_true]])
+        C = np.array([[- M * (R + 1), 1 - M, M * R], [- M, - M, 0], [0, 0, - beta]])
+        SIGMA = - np.array([[(M * R) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, beta ** 2 / pi_w_true]])
         #eigValues, eigVectors = np.linalg.eig(C)        
         OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
         
@@ -127,20 +129,7 @@ ma = (M_range[xmax, ymax], R_range[xmax, ymax], MSE_for_MR.max())
 
 ax.scatter(mi[0], mi[1], mi[2], marker="o", color='r')
 
-## Arrays for plotting, 
-## first row for points in xplane, last row for points in 3D space
-#Ami = np.array([mi]*4)
-#Ama = np.array([ma]*4)
-#for i, v in enumerate([-40,40,-100]):
-#    Ami[i,i] = v 
-#    Ama[i,i] = v 
-#
-##plot points.
-#ax.plot(Ami[:,0], Ami[:,1], Ami[:,2], marker="o", ls="", c=cm.coolwarm(0.))
-#ax.plot(Ama[:,0], Ama[:,1], Ama[:,2], marker="o", ls="", c=cm.coolwarm(1.))
-
 ax.view_init(azim=-45, elev=19)
-plt.savefig(__file__+".png")
 plt.show()
 
 plt.figure()
@@ -178,8 +167,8 @@ pi_w = np.exp(7)
 for i in range(k_iterations):
     k = k_range[i]
     
-    C = np.array([[- k * (pi_z + pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w, - k * pi_w, 0], [0, 0, - 1]])
-    SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / pi_w_true]])
+    C = np.array([[- k * (pi_z + beta * pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w * beta, - k * pi_w, 0], [0, 0, - beta]])
+    SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, beta ** 2 / pi_w_true]])
     #eigValues, eigVectors = np.linalg.eig(C)        
     OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
     
@@ -187,10 +176,12 @@ for i in range(k_iterations):
     
 plt.figure()
 plt.plot(k_range, MSE_for_k)
+plt.plot(k_range[MSE_for_k.argmin()], MSE_for_k.min(), marker="o", color='r')
+plt.title('Min = ' + str(k_range[MSE_for_k.argmin()]))
 
 
-C = np.array([[- k * (pi_z + pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w, - k * pi_w, 0], [0, 0, - 1]])
-SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / pi_w_true]])
+C = np.array([[- k * (pi_z + beta * pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w * beta, - k * pi_w, 0], [0, 0, - beta]])
+SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, beta ** 2 / pi_w_true]])
 #eigValues, eigVectors = np.linalg.eig(C)        
 OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
 
@@ -230,30 +221,78 @@ OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
 
 ### simulate equations numerically
 
+pi_z = np.exp(3)
+pi_w = np.exp(5)
+
+k = .0001
+
+C = np.array([[- k * (pi_z + beta * pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w * beta, - k * pi_w, 0], [0, 0, - beta]])
+SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, beta ** 2 / pi_w_true]])
+
+X = np.zeros((variables, iterations))
+#X[:, 0] = np.ones((variables, ))
+dX = np.zeros((variables,))
+dW = np.random.randn(variables, iterations)
+sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, beta / np.sqrt(pi_w_true)]])
+
+OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
+
+for i in range(iterations - 1):
+    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
+    X[:, i + 1] = X[:, i] + dt * dX
+
+
+plt.figure()
+plt.plot(np.arange(0, iterations*dt, dt), X[2, :], 'b')
+plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
+plt.title('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
+
+
+skip_seconds = 20
+skip_iterations = int(skip_seconds / dt)
+#print(np.var(X[0, skip_iterations:]))
+#print(np.var(X[2, skip_iterations:]))
+print('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
+print('MSE = ' + str(1/(iterations - skip_iterations) * np.sum((X[2, skip_iterations:] - X[0, skip_iterations:])**2)) + '\n')
+
+
+
+
 pi_z = np.exp(4)
 pi_w = np.exp(6)
 
 k = .001
 
-C = np.array([[- k * (pi_z + pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w, - k * pi_w, 0], [0, 0, - 1]])
-SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / pi_w_true]])
+C = np.array([[- k * (pi_z + beta * pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w * beta, - k * pi_w, 0], [0, 0, - beta]])
+SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, beta ** 2 / pi_w_true]])
 
 X = np.zeros((variables, iterations))
-X[:, 0] = np.ones((variables, ))
+#X[:, 0] = np.ones((variables, ))
 dX = np.zeros((variables,))
 dW = np.random.randn(variables, iterations)
-sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, 1 / np.sqrt(pi_w_true)]])
+sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, beta / np.sqrt(pi_w_true)]])
 
 OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
+
+F = np.zeros((iterations, ))
 
 for i in range(iterations - 1):
     dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
     X[:, i + 1] = X[:, i] + dt * dX
+     
+    if i > iterations / 2:
+        pi_w = np.exp(7)
+     
+    F[i] = .5 * (pi_z * (X[2, i] + dW[0, i] / np.sqrt(pi_z_true) - X[0, i]) ** 2 + pi_w * (X[1, i] + beta * X[0, i]) ** 2 + np.log(pi_z) * np.log(pi_w))
 
 
 plt.figure()
 plt.plot(np.arange(0, iterations*dt, dt), X[2, :], 'b')
 plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
+plt.title('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
+
+plt.figure()
+plt.plot(F)
 
 
 
@@ -262,7 +301,7 @@ skip_iterations = int(skip_seconds / dt)
 #print(np.var(X[0, skip_iterations:]))
 #print(np.var(X[2, skip_iterations:]))
 print('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
-print('MSE = ' + str(1/(iterations - skip_iterations) * np.sum((X[2, skip_iterations:] - X[0, skip_iterations:])**2)))
+print('MSE = ' + str(1/(iterations - skip_iterations) * np.sum((X[2, skip_iterations:] - X[0, skip_iterations:])**2)) + '\n')
 
 
 
@@ -271,14 +310,14 @@ pi_w = np.exp(7)
 
 k = .001
 
-C = np.array([[- k * (pi_z + pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w, - k * pi_w, 0], [0, 0, - 1]])
-SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / pi_w_true]])
+C = np.array([[- k * (pi_z + beta * pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w * beta, - k * pi_w, 0], [0, 0, - beta]])
+SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, beta ** 2 / pi_w_true]])
 
 X = np.zeros((variables, iterations))
-X[:, 0] = np.ones((variables, ))
+#X[:, 0] = np.ones((variables, ))
 dX = np.zeros((variables,))
 dW = np.random.randn(variables, iterations)
-sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, 1 / np.sqrt(pi_w_true)]])
+sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, beta / np.sqrt(pi_w_true)]])
 
 OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
 
@@ -290,43 +329,7 @@ for i in range(iterations - 1):
 plt.figure()
 plt.plot(np.arange(0, iterations*dt, dt), X[2, :], 'b')
 plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
-
-
-
-skip_seconds = 20
-skip_iterations = int(skip_seconds / dt)
-#print(np.var(X[0, skip_iterations:]))
-#print(np.var(X[2, skip_iterations:]))
-print('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
-print('MSE = ' + str(1/(iterations - skip_iterations) * np.sum((X[2, skip_iterations:] - X[0, skip_iterations:])**2)))
-
-
-
-pi_z = np.exp(5)
-pi_w = np.exp(7)
-
-k = .001
-
-C = np.array([[- k * (pi_z + pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w, - k * pi_w, 0], [0, 0, - 1]])
-SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / pi_w_true]])
-
-X = np.zeros((variables, iterations))
-X[:, 0] = np.ones((variables, ))
-dX = np.zeros((variables,))
-dW = np.random.randn(variables, iterations)
-sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, 1 / np.sqrt(pi_w_true)]])
-
-OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
-
-for i in range(iterations - 1):
-    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
-    X[:, i + 1] = X[:, i] + dt * dX
-
-
-plt.figure()
-plt.plot(np.arange(0, iterations*dt, dt), X[2, :], 'b')
-plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
-
+plt.title('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
 
 
 skip_seconds = 20
@@ -334,7 +337,43 @@ skip_iterations = int(skip_seconds / dt)
 #print(np.var(X[0, skip_iterations:]))
 #print(np.var(X[2, skip_iterations:]))
 print('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
-print('MSE = ' + str(1/(iterations - skip_iterations) * np.sum((X[2, skip_iterations:] - X[0, skip_iterations:])**2)))
+print('MSE = ' + str(1/(iterations - skip_iterations) * np.sum((X[2, skip_iterations:] - X[0, skip_iterations:])**2)) + '\n')
+
+
+
+#pi_z = np.exp(5)
+#pi_w = np.exp(7)
+#
+#k = .0001
+#
+#C = np.array([[- k * (pi_z + beta * pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w * beta, - k * pi_w, 0], [0, 0, - beta]])
+#SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, beta ** 2 / pi_w_true]])
+#
+#X = np.zeros((variables, iterations))
+##X[:, 0] = np.ones((variables, ))
+#dX = np.zeros((variables,))
+#dW = np.random.randn(variables, iterations)
+#sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, beta / np.sqrt(pi_w_true)]])
+#
+#OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
+#
+#for i in range(iterations - 1):
+#    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
+#    X[:, i + 1] = X[:, i] + dt * dX
+#
+#
+#plt.figure()
+#plt.plot(np.arange(0, iterations*dt, dt), X[2, :], 'b')
+#plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
+#plt.title('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
+#
+#
+#skip_seconds = 20
+#skip_iterations = int(skip_seconds / dt)
+##print(np.var(X[0, skip_iterations:]))
+##print(np.var(X[2, skip_iterations:]))
+#print('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
+#print('MSE = ' + str(1/(iterations - skip_iterations) * np.sum((X[2, skip_iterations:] - X[0, skip_iterations:])**2)) + '\n')
 
 
 
