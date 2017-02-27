@@ -259,8 +259,8 @@ pi_w_true = np.exp(6)                # true values used for gp
 
 
 
-pi_z = np.exp(5)
-pi_w = np.exp(9)
+pi_z = np.exp(4)
+pi_w = np.exp(6)
 
 k = .001
 
@@ -269,7 +269,7 @@ SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / p
 
 X = np.zeros((variables, iterations))
 X[:, 0] = np.ones((variables, ))
-dX = np.zeros((variables,))
+dX = np.zeros((variables, iterations))
 dW = np.random.randn(variables, iterations)
 sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, 1 / np.sqrt(pi_w_true)]])
 
@@ -285,19 +285,29 @@ kappa = .05
 phi = 0.
 pi_z_history = np.zeros((iterations, ))
 
-eta = .00001
+eta = .01
 psi = 0.
 pi_w_history = np.zeros((iterations, ))
+
+aa = np.zeros((iterations, ))
+bb = np.zeros((iterations, ))
 
 for i in range(iterations - 1):
 #    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
 #    X[:, i + 1] = X[:, i] + dt * dX
 
-    dX[2] = - beta * X[2, i] + sigma[2, 2] * dW[2, i] / np.sqrt(dt)
-    X[2, i + 1] = X[2, i] + dt * dX[2]
+    dX[2, i] = - beta * X[2, i] + sigma[2, 2] * dW[2, i] / np.sqrt(dt)
+    X[2, i + 1] = X[2, i] + dt * dX[2, i]
     
-    dX[:-1] = np.dot(C[:-1, :-1], X[:-1, i]) + np.dot(sigma[:-1, :-1], dW[:-1, i]) / np.sqrt(dt)
-    X[:-1, i + 1] = X[:-1, i] + dt * dX[:-1]
+#    dX[:-1, i] = np.dot(C[:-1, :-1], X[:-1, i]) + np.dot(sigma[:-1, :-1], dW[:-1, i]) / np.sqrt(dt)
+#    dX[0, i] = np.dot(C[0, :-1], X[:-1, i]) + np.dot(sigma[0, :-1], dW[:-1, i]) / np.sqrt(dt)
+#    dX[1, i] = np.dot(C[1, :-1], X[:-1, i]) + np.dot(sigma[1, :-1], dW[:-1, i]) / np.sqrt(dt)
+    dX[0, i] = X[1, i] - k * (pi_z * (X[0, i] - X[2, i]) + pi_w * (X[1, i] + X[0, i]) - pi_z / np.sqrt(pi_z_true) * dW[0, i] / np.sqrt(dt)) 
+    dX[1, i] = 0 - k * (pi_w * (X[1, i] + X[0, i]) + pi_z * (X[1, i] - dX[2, i]) - pi_z / np.sqrt(pi_z_true) * dW[0, i] / np.sqrt(dt))
+    
+    aa[i] = pi_z * (X[1, i] - dX[2, i])
+    bb[i] = pi_w * (X[1, i] + X[0, i])
+    X[:-1, i + 1] = X[:-1, i] + dt * dX[:-1, i]
     
 #    if i > iterations / 3:
 #        pi_w = np.exp(6)
@@ -310,22 +320,31 @@ for i in range(iterations - 1):
     F[i] = .5 * (pi_z * eps_z[i] ** 2 + pi_w * eps_w[i] ** 2 - np.log(pi_z * pi_w))
     E[i] = (X[2, i] - X[0, i]) ** 2
     
-    dphi = - .5 * (eps_z[i] ** 2 - 1 /  pi_z) - kappa * phi
-    phi += dt * dphi
-    
-    dpi_z = phi
-    pi_z += dt * dpi_z
+#    dphi = - .5 * (eps_z[i] ** 2 - 1 /  pi_z) - kappa * phi
+#    phi += dt * dphi
+#    
+#    dpi_z = phi
+#    pi_z += dt * dpi_z
     
     pi_z_history[i] = pi_z
     
     
-    dpsi = - .5 * (eps_w[i] ** 2 - 1 /  pi_w) - eta * psi
-    psi += dt * dpsi
-    
-    dpi_w = psi
-    pi_w += dt * dpi_w
+#    dpsi = - .5 * (eps_w[i] ** 2 - 1 /  pi_w) - eta * psi
+#    psi += dt * dpsi
+#    
+#    dpi_w = psi
+#    pi_w += dt * dpi_w
     
     pi_w_history[i] = pi_w
+
+#print(np.var(eps_z))
+#print(1/pi_z)
+#print(1/pi_z_true)
+print(np.var(X[2, :]))
+print(np.var(eps_w))
+print(OMEGA[0, 0] + 2 * OMEGA[1, 0] + OMEGA[1, 1])
+print(1/pi_w)
+print(1/pi_w_true)
 
 
 plt.figure()
@@ -338,15 +357,23 @@ plt.plot(pi_w_history[:-1])
 plt.title('Pi_w')
 plt.grid(True)
 
-#plt.figure()
-#plt.plot(np.arange(0, iterations*dt, dt), rho, 'b')
-#plt.plot(np.arange(0, iterations*dt, dt), X[2, :], 'g')
-#plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
-#plt.title('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
+plt.figure()
+plt.plot(np.arange(0, iterations*dt, dt), rho, 'b')
+plt.plot(np.arange(0, iterations*dt, dt), X[2, :], 'g')
+plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
+plt.title('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
+
+plt.figure()
+plt.plot(np.arange(0, iterations*dt, dt), dX[2, :], 'b')
+plt.plot(np.arange(0, iterations*dt, dt), dX[0, :], 'g')
+plt.plot(np.arange(0, iterations*dt, dt), X[1, :], 'r')
 
 #plt.figure()
-#plt.plot(X[1, :], 'b')
-#plt.plot(X[0, :], 'r')
+#plt.plot(aa)
+#
+#plt.figure()
+#plt.plot(bb)
+
 #
 #plt.figure()
 #plt.semilogy(F[:-1], 'b')
