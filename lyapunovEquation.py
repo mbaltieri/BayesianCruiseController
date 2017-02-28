@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 dt = .05
-T = 2400
+T = 240
 iterations = int(T / dt)
 #np.random.seed(42)
 plt.close('all')
@@ -263,6 +263,7 @@ pi_z = np.exp(4)
 pi_w = np.exp(6)
 
 k = .001
+#k = 1 / pi_z 
 
 C = np.array([[- k * (pi_z + beta * pi_w), 1 - k * pi_w, k * pi_z], [- k * pi_w * beta, - k * pi_w, 0], [0, 0, - beta]])
 SIGMA = - np.array([[(k * pi_z) ** 2 / pi_z_true, 0, 0], [0, 0, 0], [0, 0, 1 / pi_w_true]])
@@ -293,17 +294,18 @@ aa = np.zeros((iterations, ))
 bb = np.zeros((iterations, ))
 
 for i in range(iterations - 1):
-#    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
-#    X[:, i + 1] = X[:, i] + dt * dX
+    dX[:, i] = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
+    X[:, i + 1] = X[:, i] + dt * dX[:, i]
 
-    dX[2, i] = - beta * X[2, i] + sigma[2, 2] * dW[2, i] / np.sqrt(dt)
-    X[2, i + 1] = X[2, i] + dt * dX[2, i]
-    
-#    dX[:-1, i] = np.dot(C[:-1, :-1], X[:-1, i]) + np.dot(sigma[:-1, :-1], dW[:-1, i]) / np.sqrt(dt)
-#    dX[0, i] = np.dot(C[0, :-1], X[:-1, i]) + np.dot(sigma[0, :-1], dW[:-1, i]) / np.sqrt(dt)
-#    dX[1, i] = np.dot(C[1, :-1], X[:-1, i]) + np.dot(sigma[1, :-1], dW[:-1, i]) / np.sqrt(dt)
-    dX[0, i] = X[1, i] - k * (pi_z * (X[0, i] - X[2, i]) + pi_w * (X[1, i] + X[0, i]) - pi_z / np.sqrt(pi_z_true) * dW[0, i] / np.sqrt(dt)) 
-    dX[1, i] = 0 - k * (pi_w * (X[1, i] + X[0, i]) + pi_z * (X[1, i] - dX[2, i]) - pi_z / np.sqrt(pi_z_true) * dW[0, i] / np.sqrt(dt))
+#    dX[2, i] = - beta * X[2, i] + sigma[2, 2] * dW[2, i] / np.sqrt(dt)
+#    X[2, i + 1] = X[2, i] + dt * dX[2, i]
+#    
+##    dX[:-1, i] = np.dot(C[:-1, :-1], X[:-1, i]) + np.dot(sigma[:-1, :-1], dW[:-1, i]) / np.sqrt(dt)
+##    dX[0, i] = np.dot(C[0, :-1], X[:-1, i]) + np.dot(sigma[0, :-1], dW[:-1, i]) / np.sqrt(dt)
+##    dX[1, i] = np.dot(C[1, :-1], X[:-1, i]) + np.dot(sigma[1, :-1], dW[:-1, i]) / np.sqrt(dt)
+#    dX[0, i] = X[1, i] - k * (pi_z * (X[0, i] - X[2, i]) + pi_w * (X[1, i] + X[0, i]) - pi_z / np.sqrt(pi_z_true) * dW[0, i] / np.sqrt(dt)) 
+#    dX[1, i] = 0 - k * (pi_w * (X[1, i] + X[0, i])) # + pi_w * (X[1, i])) 
+                                                    # + pi_z * (X[1, i] - dX[2, i]) - pi_z / np.sqrt(pi_z_true) * dW[0, i] / np.sqrt(dt))
     
     aa[i] = pi_z * (X[1, i] - dX[2, i])
     bb[i] = pi_w * (X[1, i] + X[0, i])
@@ -337,14 +339,17 @@ for i in range(iterations - 1):
     
     pi_w_history[i] = pi_w
 
-#print(np.var(eps_z))
+skip_seconds = 20
+skip_iterations = int(skip_seconds / dt)
+
+#print(np.var(eps_z[skip_iterations:]))
 #print(1/pi_z)
 #print(1/pi_z_true)
-print(np.var(X[2, :]))
-print(np.var(eps_w))
+print(np.var(X[2, skip_iterations:]))
+print(np.var(eps_w[skip_iterations:]))
 print(OMEGA[0, 0] + 2 * OMEGA[1, 0] + OMEGA[1, 1])
 print(1/pi_w)
-print(1/pi_w_true)
+#print(1/pi_w_true)
 
 
 plt.figure()
