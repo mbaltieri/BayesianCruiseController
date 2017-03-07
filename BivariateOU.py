@@ -35,9 +35,12 @@ beta = 1.0
 
 MSE = np.zeros((steps))
 
+epsilon = np.exp(-15)
+
 for i in range(steps):
-    sigma_x = np.exp(- 2)
-    sigma_y = np.exp(- 3)
+    sigma_x = 0.12
+    sigma_y = 1
+    sigma_x = 1.414
     dW = np.random.randn(variables, iterations)
     
     X = np.zeros((variables, iterations))
@@ -46,51 +49,80 @@ for i in range(steps):
     SIGMA = - np.dot(sigma.transpose(), sigma)
     
     OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
-    
+#    OMEGA_TEST = np.array([[sigma_x ** 2 / (2 * alpha_range[i]),
+#                            w * sigma_x ** 2 / (2 * alpha_range[i] ** 2 + 2 * alpha_range[i] * beta)],
+#                           [w * sigma_x ** 2 / (2 * alpha_range[i] ** 2 + 2 * alpha_range[i] * beta),
+#                            (2 * w ** 2 * sigma_x ** 2 + 2 * alpha_range[i] ** 2 * sigma_y ** 2 + 2 * alpha_range[i] * beta * sigma_y ** 2) / (4 * alpha_range[i] ** 2 * beta + 4 * alpha_range[i] * beta ** 2)]])
+    OMEGA_TEST = np.array([[(w ** 2 * sigma_y ** 2 + beta ** 2 * sigma_x ** 2 + alpha_range[i] * beta * sigma_x ** 2) / (2 * alpha_range[i] ** 2 * beta + 2 * alpha_range[i] * beta ** 2),
+                            w * sigma_y ** 2 / (2 * beta ** 2 + 2 * alpha_range[i] * beta)],
+                           [w * sigma_y ** 2 / (2 * beta ** 2 + 2 * alpha_range[i] * beta),
+                            sigma_y ** 2 / (2 * beta),]])
+#    OMEGA = OMEGA_TEST
     MSE[i] = OMEGA[0, 0] - 2 * OMEGA[0, 1] + OMEGA[1, 1]
 
 plt.figure()
 plt.plot(alpha_range, MSE)
 plt.plot(alpha_range[MSE.argmin()], MSE.min(), marker="o", color='r')
-plt.title('MSE = ' + str(alpha_range[MSE.argmin()]))
+plt.title('Alpha = ' + str(alpha_range[MSE.argmin()]))
 
 
 
-#C = np.array([[- alpha_min, w], [0., - beta]])
-#X = np.zeros((variables, iterations))
-#for i in range(iterations - 1):
-#    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
-#    X[:, i + 1] = X[:, i] + dt * dX
-#
-#plt.figure()
-#plt.plot(np.arange(0, iterations*dt, dt), X[1, :], 'b')
-#plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
-#plt.title('MSE = ' + str(np.mean((X[1, :] - X[0, :]) ** 2)))
-#
-#
-#C = np.array([[- 4, w], [0., - beta]])
-#X = np.zeros((variables, iterations))
-#for i in range(iterations - 1):
-#    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
-#    X[:, i + 1] = X[:, i] + dt * dX
-#
-#plt.figure()
-#plt.plot(np.arange(0, iterations*dt, dt), X[1, :], 'b')
-#plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
-#plt.title('MSE = ' + str(np.mean((X[1, :] - X[0, :]) ** 2)))
-#
-#
-#C = np.array([[- 1000, w], [0., - beta]])
-#X = np.zeros((variables, iterations))
-#for i in range(iterations - 1):
-#    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
-#    X[:, i + 1] = X[:, i] + dt * dX
-#
-#plt.figure()
-#plt.plot(np.arange(0, iterations*dt, dt), X[1, :], 'b')
-#plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
-#plt.title('MSE = ' + str(np.mean((X[1, :] - X[0, :]) ** 2)))
 
+C = np.array([[- alpha_min, w], [0., - beta]])
+X = np.zeros((variables, iterations))
+for i in range(iterations - 1):
+    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
+    X[:, i + 1] = X[:, i] + dt * dX
+
+plt.figure()
+plt.plot(np.arange(0, iterations*dt, dt), X[1, :], 'b')
+plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
+plt.title('MSE = ' + str(np.mean((X[1, :] - X[0, :]) ** 2)))
+
+
+C = np.array([[- 4, w], [0., - beta]])
+X = np.zeros((variables, iterations))
+for i in range(iterations - 1):
+    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
+    X[:, i + 1] = X[:, i] + dt * dX
+
+plt.figure()
+plt.plot(np.arange(0, iterations*dt, dt), X[1, :], 'b')
+plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
+plt.title('MSE = ' + str(np.mean((X[1, :] - X[0, :]) ** 2)))
+
+
+C = np.array([[- 100, w], [0., - beta]])
+X = np.zeros((variables, iterations))
+for i in range(iterations - 1):
+    dX = np.dot(C, X[:, i]) + np.dot(sigma, dW[:, i]) / np.sqrt(dt)
+    X[:, i + 1] = X[:, i] + dt * dX
+
+plt.figure()
+plt.plot(np.arange(0, iterations*dt, dt), X[1, :], 'b')
+plt.plot(np.arange(0, iterations*dt, dt), X[0, :], 'r')
+plt.title('MSE = ' + str(np.mean((X[1, :] - X[0, :]) ** 2)))
+
+def dMSEdalpha(alpha):
+    return alpha ** 2 * (2 * sigma_y ** 2 - sigma_x ** 2) + alpha * (- 2 * sigma_x ** 2 - 2 * sigma_y ** 2) - sigma_x ** 2 - sigma_y ** 2
+
+
+sigma_x_min = sigma_y / 1.5
+sigma_x_max = sigma_y * 1.5
+steps = 1000
+
+sigma_x_range = np.arange(sigma_x_min, sigma_x_max, (sigma_x_max - sigma_x_min) / steps)
+
+y = np.zeros((steps, ))
+
+for i in range(steps):
+    sigma_x = sigma_x_range[i]
+    y[i] = sp.optimize.fsolve(dMSEdalpha, 1000)
+
+plt.figure()
+plt.plot(sigma_x_range, y)
+plt.plot(sigma_x_range[y.argmax()], y.max(), marker="o", color='r')
+plt.title('Sigma_x = ' + str(sigma_x_range[y.argmax()]) + ', alpha = ' + str(y.max()))
 
 #tau_min = .001
 #tau_max = 5.

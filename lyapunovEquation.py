@@ -15,6 +15,7 @@ import scipy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import sympy as sy
 
 dt = .05
 T = 240
@@ -276,6 +277,20 @@ sigma = np.array([[k * pi_z / np.sqrt(pi_z_true), 0, 0], [0, 0, 0], [0, 0, 1 / n
 
 OMEGA = sp.linalg.solve_lyapunov(C, SIGMA)
 
+sigma_w = 1 / np.sqrt(pi_w_true)
+sigma_z = 1 / np.sqrt(pi_z_true)
+alpha = beta
+
+omega31 = pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k * alpha * pi_z * pi_w + 2 * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w)
+omega32 = - k * beta * pi_w / (alpha + k * pi_w) * omega31
+omega33 = sigma_w ** 2 / (2 * alpha)
+omega11 = 1 / (2 * k * (pi_z + beta * pi_w)) * (2 * pi_z * (1 - k * pi_w) * omega32 / (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w) + 2 * k * pi_z * omega31 + k ** 2 * pi_z ** 2 * 
+               sigma_z ** 2) / (1 + 2 * beta * pi_w * (1 - k * pi_w) / (2 * k * (pi_z + beta * pi_w) * (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w)))
+omega21 = (pi_z * omega32 - beta * pi_w * omega11) / (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w)
+omega22 = - beta * omega21
+
+OMEGA_TEST = np.array([[omega11, omega21, omega31], [omega21, omega22, omega32], [omega31, omega32, omega33]])
+
 F = np.zeros((iterations, ))
 E = np.zeros((iterations, ))
 rho = np.zeros((iterations, ))
@@ -528,16 +543,99 @@ plt.plot(np.arange(0, iterations*dt, dt), X[1, :], 'r')
 #print('MSE = ' + str(OMEGA[0, 0] - 2 * OMEGA[0, 2] + OMEGA[2, 2]))
 #print('MSE = ' + str(1/(iterations - skip_iterations) * np.sum((X[2, skip_iterations:] - X[0, skip_iterations:])**2)) + '\n')
 
+#sigma_w = 1
 
 
-pi_z = np.exp(4)
-k = 0.001
-J = np.array([[0, 1.], [- 1 / ( 2 * pi_z ** 2), - k]])
-eigValues, eigVectors = np.linalg.eig(J)
+#pi_z = np.exp(4)
+#k = 0.001
+#J = np.array([[0, 1.], [- 1 / ( 2 * pi_z ** 2), - k]])
+#eigValues, eigVectors = np.linalg.eig(J)
+#
+#pi_w = np.exp(6)
+#k = 0.00001
+#J = np.array([[0, 1.], [- 1 / ( 2 * pi_w ** 2), - k]])
+#eigValues2, eigVectors2 = np.linalg.eig(J)
 
-pi_w = np.exp(6)
-k = 0.00001
-J = np.array([[0, 1.], [- 1 / ( 2 * pi_w ** 2), - k]])
-eigValues2, eigVectors2 = np.linalg.eig(J)
+
+#pi_z, pi_w, alpha, beta, k, sigma_z, sigma_w = sy.symbols('pi_z pi_w alpha beta k sigma_z sigma_w')
+
+omega31 = pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k * alpha * pi_z * pi_w + 2 * alpha ** 2
+                                * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w)
+omega32 = - k * beta * pi_w / (alpha + k * pi_w) * pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2
+                              * k * alpha * pi_z * pi_w + 2 * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w)
+omega33 = sigma_w ** 2 / (2 * alpha)
+omega11 = 1 / (2 * k * (pi_z + beta * pi_w)) * (2 * pi_z * (1 - k * pi_w) * - k * beta * pi_w / (alpha + k * pi_w) * pi_z * sigma_w ** 2 *
+               (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k * alpha * pi_z * pi_w + 2 * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k
+               + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w) / (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w) + 2 * k * pi_z * 
+               pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k * alpha * pi_z * pi_w + 2 * alpha ** 2 * beta * pi_w
+               + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w) + k ** 2 * pi_z ** 2 * 
+               sigma_z ** 2) / (1 + 2 * beta * pi_w * (1 - k * pi_w) / (2 * k * (pi_z + beta * pi_w) * (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w)))
+omega21 = (pi_z * - k * beta * pi_w / (alpha + k * pi_w) * pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k * alpha * pi_z * pi_w + 2
+           * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w) - beta * pi_w *  1 / (2 * k * (pi_z + beta * pi_w))
+           * (2 * pi_z * (1 - k * pi_w) * - k * beta * pi_w / (alpha + k * pi_w) * pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k *
+           alpha * pi_z * pi_w + 2 * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w) / (pi_z + beta * pi_w +
+           pi_w + beta / k - beta * pi_w) + 2 * k * pi_z * pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k * alpha * pi_z * pi_w + 2 
+           * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w) + k ** 2 * pi_z ** 2 * sigma_z ** 2) / (1 + 2 * 
+           beta * pi_w * (1 - k * pi_w) / (2 * k * (pi_z + beta * pi_w) * (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w)))) / (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w)
+omega22 = - beta * (pi_z * - k * beta * pi_w / (alpha + k * pi_w) * pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k * alpha * pi_z * pi_w + 2
+           * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w) - beta * pi_w *  1 / (2 * k * (pi_z + beta * pi_w))
+           * (2 * pi_z * (1 - k * pi_w) * - k * beta * pi_w / (alpha + k * pi_w) * pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k *
+           alpha * pi_z * pi_w + 2 * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w) / (pi_z + beta * pi_w +
+           pi_w + beta / k - beta * pi_w) + 2 * k * pi_z * pi_z * sigma_w ** 2 * (alpha + k * pi_w) / (2 * alpha ** 2 * pi_z + 2 * k * alpha * pi_z * pi_w + 2 
+           * alpha ** 2 * beta * pi_w + 2 * alpha ** 3 / k + 2 * alpha ** 2 * pi_w + 2 * alpha * beta * pi_w) + k ** 2 * pi_z ** 2 * sigma_z ** 2) / (1 + 2 * 
+           beta * pi_w * (1 - k * pi_w) / (2 * k * (pi_z + beta * pi_w) * (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w)))) / (pi_z + beta * pi_w + pi_w + beta / k - beta * pi_w)
+
+OMEGA_TEST = np.array([[omega11, omega21, omega31], [omega21, omega22, omega32], [omega31, omega32, omega33]])
+
+
+def dMsedpi_z(pi_z):
+    return -2*pi_z*sigma_w**2*(alpha + k*pi_w)*(-2*alpha**2 - 2*alpha*k*pi_w)/(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z)**2 - 2*sigma_w**2*(alpha + k*pi_w)/(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z) + (beta*pi_w*(-k*pi_w + 1)/(k*(beta*pi_w + pi_z)*(beta/k + pi_w + pi_z)**2) + beta*pi_w*(-k*pi_w + 1)/(k*(beta*pi_w + pi_z)**2*(beta/k + pi_w + pi_z)))*(-2*beta*k*pi_w*pi_z**2*sigma_w**2*(-k*pi_w + 1)/((beta/k + pi_w + pi_z)*(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z)) + k**2*pi_z**2*sigma_z**2 + 2*k*pi_z**2*sigma_w**2*(alpha + k*pi_w)/(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z))/(2*k*(beta*pi_w + pi_z)*(beta*pi_w*(-k*pi_w + 1)/(k*(beta*pi_w + pi_z)*(beta/k + pi_w + pi_z)) + 1)**2) + (-2*beta*k*pi_w*pi_z**2*sigma_w**2*(-2*alpha**2 - 2*alpha*k*pi_w)*(-k*pi_w + 1)/((beta/k + pi_w + pi_z)*(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z)**2) + 2*beta*k*pi_w*pi_z**2*sigma_w**2*(-k*pi_w + 1)/((beta/k + pi_w + pi_z)**2*(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z)) - 4*beta*k*pi_w*pi_z*sigma_w**2*(-k*pi_w + 1)/((beta/k + pi_w + pi_z)*(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z)) + 2*k**2*pi_z*sigma_z**2 + 2*k*pi_z**2*sigma_w**2*(alpha + k*pi_w)*(-2*alpha**2 - 2*alpha*k*pi_w)/(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z)**2 + 4*k*pi_z*sigma_w**2*(alpha + k*pi_w)/(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z))/(2*k*(beta*pi_w + pi_z)*(beta*pi_w*(-k*pi_w + 1)/(k*(beta*pi_w + pi_z)*(beta/k + pi_w + pi_z)) + 1)) - (-2*beta*k*pi_w*pi_z**2*sigma_w**2*(-k*pi_w + 1)/((beta/k + pi_w + pi_z)*(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z)) + k**2*pi_z**2*sigma_z**2 + 2*k*pi_z**2*sigma_w**2*(alpha + k*pi_w)/(2*alpha**3/k + 2*alpha**2*beta*pi_w + 2*alpha**2*pi_w + 2*alpha**2*pi_z + 2*alpha*beta*pi_w + 2*alpha*k*pi_w*pi_z))/(2*k*(beta*pi_w + pi_z)**2*(beta*pi_w*(-k*pi_w + 1)/(k*(beta*pi_w + pi_z)*(beta/k + pi_w + pi_z)) + 1))
+
+sigma_z_min = 0.00001
+sigma_z_max = .02
+steps = 100
+
+sigma_z_range = np.arange(sigma_z_min, sigma_z_max, (sigma_z_max - sigma_z_min) / steps)
+
+y = np.zeros((steps, ))
+
+for i in range(steps):
+    sigma_z = sigma_z_range[i]
+    y[i] = sp.optimize.fsolve(dMsedpi_z, 100)
+
+plt.figure()
+plt.plot(sigma_z_range, y)
+plt.plot(sigma_z_range[y.argmax()], y.max(), marker="o", color='r')
+plt.title('Sigma_z = ' + str(sigma_z_range[y.argmax()]) + ', pi_z = ' + str(y.max()))
+
+#dMSEdpi_z = sy.diff(omega11 - 2 * omega31 + omega33, pi_z, 1)
+#dMSEdpi_z_simplified = sy.simplify(dMSEdpi_z)
+#dMsedpi_z_expanded = sy.expand(dMSEdpi_z)
+#dMSEdpi_z_common = sy.ratsimp(dMSEdpi_z)
+#dMsedpi_z_collect = sy.collect(dMSEdpi_z, pi_z)
+
+#opt_pi_z = sy.solve(dMSEdpi_z, pi_z)
+
+#print(dMSEdpi_z)
+#print(dMsedpi_z_expanded)
+#print(dMSEdpi_z_common)
+#print(dMsedpi_z_collect)
+#print(opt_pi_z)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
