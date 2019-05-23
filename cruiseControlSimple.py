@@ -14,9 +14,9 @@ import scipy.linalg as splin
 
 ### define font size for plots ###
 #
-SMALL_SIZE = 16
-MEDIUM_SIZE = 20
-BIGGER_SIZE = 22
+SMALL_SIZE = 24
+MEDIUM_SIZE = 27
+BIGGER_SIZE = 30
 
 plt.rc('font', size=MEDIUM_SIZE)            # controls default text sizes
 plt.rc('axes', titlesize=MEDIUM_SIZE)       # fontsize of the axes title
@@ -26,6 +26,8 @@ plt.rc('ytick', labelsize=SMALL_SIZE)       # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)       # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)     # fontsize of the figure title
 #
+
+
 
 dt = .05
 T = 10
@@ -74,7 +76,7 @@ def cruiseControlSimple(simulation, precision_strength):
     a = np.zeros((iterations, 1))
     
     mu_x = np.zeros((iterations, 2))
-    mu_v = np.zeros((iterations, 2))
+    # mu_v = np.zeros((iterations, 2))
     mu_v = 10*np.ones((iterations, 2))
     
     xi_z = np.zeros((iterations, 2))
@@ -110,7 +112,8 @@ def cruiseControlSimple(simulation, precision_strength):
         
         F[i] = .5 * (np.dot(np.dot(xi_z[i, :], mu_pi_z), xi_z[i, :].transpose()) + xi_w[i]*mu_pi_w*xi_w[i] - np.log(mu_pi_z[0,0]*mu_pi_z[0,0]*mu_pi_w))
     
-    return psi, x, a, mu_x, xi_z, xi_w, F
+    v_des = mu_v[0,0]
+    return psi, x, a, mu_x, xi_z, xi_w, F, v_des
 
 # simulations:
 # 0: passive tracker
@@ -121,24 +124,29 @@ def cruiseControlSimple(simulation, precision_strength):
 # 2: active tracker
 # 3: active dreamer
 
-simulation = 3
+simulation = 0
 precision_strength = 1          # only simulation 0
 
-psi, x, a, mu_x, xi_z, xi_w, F = cruiseControlSimple(simulation, precision_strength)
+psi, x, a, mu_x, xi_z, xi_w, F, v_des = cruiseControlSimple(simulation, precision_strength)
 
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(10, 7))
 plt.title('Block velocity')
+# plt.plot(np.arange(0, T-dt, dt), psi[:-1, 0], 'k', linestyle='-.', label='Observed velocity')
+# plt.plot(np.arange(0, T-dt, dt), x[:-1, 0], 'k', linestyle='--', label='Real velocity')
+# plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 0], 'k', linestyle=':', label='Estimated velocity')
 plt.plot(np.arange(0, T-dt, dt), psi[:-1, 0], 'b', label='Observed velocity')
-plt.plot(np.arange(0, T-dt, dt), x[:-1, 0], 'k', label='Real velocity')
-plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 0], 'r', label='Estimated velocity')
+plt.plot(np.arange(0, T-dt, dt), x[:-1, 0], 'r', label='Real velocity')
+plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 0], 'k', label='Estimated velocity')
+plt.axhline(y=v_des, color='k', linestyle='--', linewidth=3, label='Desired velocity')
 plt.xlim(0, T)
+plt.ylim(-25., 35.)
 plt.xlabel('Time ($s$)')
 plt.ylabel('Velocity ($km/h$)')
 plt.legend(loc=1)
 plt.savefig("figures/cruiseControlActiveInferenceVelocity.pdf")
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(10, 7))
 plt.title('Block acceleration')
 plt.plot(np.arange(0, T-dt, dt), psi[:-1, 1], 'b', label='Observed acceleration')
 plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 1], 'r', label='Real acceleration')
@@ -149,31 +157,34 @@ plt.ylabel('Acceleration ($km/h^2$)')
 plt.legend(loc=4)
 plt.savefig("figures/cruiseControlActiveInferenceAcceleration.pdf")
  
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(10, 7))
 plt.title('Sensory prediction error on velocity')
 plt.plot(np.arange(0, T-dt, dt), xi_z[:-1, 0])
 plt.xlim(0, T)
 plt.xlabel('Time ($s$)')
 plt.ylabel('a.u.')
+plt.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
 plt.savefig("figures/cruiseControlActiveInferenceSensoryPEVelocity.pdf")
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(10, 7))
 plt.title('Sensory prediction error on acceleration')
 plt.plot(np.arange(0, T-dt, dt), xi_z[:-1, 1])
 plt.xlim(0, T)
 plt.xlabel('Time ($s$)')
 plt.ylabel('a.u.')
+plt.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
 plt.savefig("figures/cruiseControlActiveInferenceSensoryPEAcceleration.pdf")
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(10, 7))
 plt.title('System prediction error')
 plt.plot(np.arange(0, T-dt, dt), xi_w[:-1])
 plt.xlim(0, T)
 plt.xlabel('Time ($s$)')
 plt.ylabel('a.u.')
+plt.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
 plt.savefig("figures/cruiseControlActiveInferenceDynamicPE.pdf")
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(10, 7))
 plt.title('Variational free energy')
 plt.semilogy(np.arange(0, T-dt, dt), F[:-1])
 plt.xlim(0, T)
@@ -181,10 +192,13 @@ plt.xlabel('Time ($s$)')
 plt.ylabel('a.u.')
 plt.savefig("figures/cruiseControlActiveInferenceFE.pdf")
 
-plt.figure(figsize=(9, 6))
+plt.figure(figsize=(10, 7))
 plt.title('Action')
 plt.plot(np.arange(0, T-dt, dt), a[:-1])
 plt.xlim(0, T)
 plt.xlabel('Time ($s$)')
 plt.ylabel('Acceleration ($km/h^2$)')
 plt.savefig("figures/cruiseControlActiveInferenceAction.pdf")
+
+plt.show()
+input("Press [enter] to continue.")
