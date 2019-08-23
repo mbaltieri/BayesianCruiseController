@@ -107,7 +107,7 @@ def cruiseControlSimple(simulation, precision_strength):
             a[i+1] = a[i] + dt * k_a * - dFda
         
         # weighted predictions errors
-        xi_z[i, :] = np.dot(psi[i,:]-mu_x[i,:], mu_pi_z[0,0])
+        xi_z[i, :] = np.dot(psi[i,:]-mu_x[i,:], mu_pi_z)
         xi_w[i] = mu_pi_w*(mu_x[i,1]+alpha*mu_x[i,0]-mu_v[i,0])
         
         F[i] = .5 * (np.dot(np.dot(xi_z[i, :], mu_pi_z), xi_z[i, :].transpose()) + xi_w[i]*mu_pi_w*xi_w[i] - np.log(mu_pi_z[0,0]*mu_pi_z[0,0]*mu_pi_w))
@@ -124,7 +124,7 @@ def cruiseControlSimple(simulation, precision_strength):
 # 2: active tracker
 # 3: active dreamer
 
-simulation = 0
+simulation = 1
 precision_strength = 1          # only simulation 0
 
 psi, x, a, mu_x, xi_z, xi_w, F, v_des = cruiseControlSimple(simulation, precision_strength)
@@ -136,29 +136,30 @@ plt.title('Block velocity')
 # plt.plot(np.arange(0, T-dt, dt), x[:-1, 0], 'k', linestyle='--', label='Real velocity')
 # plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 0], 'k', linestyle=':', label='Estimated velocity')
 plt.plot(np.arange(0, T-dt, dt), psi[:-1, 0], 'b', label='Observed velocity')
-plt.plot(np.arange(0, T-dt, dt), x[:-1, 0], 'r', label='Real velocity')
-plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 0], 'k', label='Estimated velocity')
+plt.plot(np.arange(0, T-dt, dt), x[:-1, 0], 'k', label='Real velocity')
+plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 0], 'r', label='Estimated velocity')
 plt.axhline(y=v_des, color='k', linestyle='--', linewidth=3, label='Desired velocity')
 plt.xlim(0, T)
-plt.ylim(-25., 35.)
+plt.ylim(-20., 35.)
 plt.xlabel('Time ($s$)')
-plt.ylabel('Velocity ($km/h$)')
+plt.ylabel('Velocity ($m/s$)')
 plt.legend(loc=1)
 plt.savefig("figures/cruiseControlActiveInferenceVelocity.pdf")
 
 plt.figure(figsize=(10, 7))
 plt.title('Block acceleration')
 plt.plot(np.arange(0, T-dt, dt), psi[:-1, 1], 'b', label='Observed acceleration')
-plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 1], 'r', label='Real acceleration')
-plt.plot(np.arange(0, T-dt, dt), x[:-1, 1], 'k', label='Estimated acceleration')
+plt.plot(np.arange(0, T-dt, dt), x[:-1, 1], 'k', label='Real acceleration')
+plt.plot(np.arange(0, T-dt, dt), mu_x[:-1, 1], 'r', label='Estimated acceleration')
 plt.xlim(0, T)
+plt.ylim(-20., 10.)
 plt.xlabel('Time ($s$)')
-plt.ylabel('Acceleration ($km/h^2$)')
+plt.ylabel('Acceleration ($m/s^2$)')
 plt.legend(loc=4)
 plt.savefig("figures/cruiseControlActiveInferenceAcceleration.pdf")
  
 plt.figure(figsize=(10, 7))
-plt.title('Sensory prediction error on velocity')
+plt.title('(Weighted) Sensory pred. error \n on velocity')
 plt.plot(np.arange(0, T-dt, dt), xi_z[:-1, 0])
 plt.xlim(0, T)
 plt.xlabel('Time ($s$)')
@@ -167,7 +168,7 @@ plt.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
 plt.savefig("figures/cruiseControlActiveInferenceSensoryPEVelocity.pdf")
 
 plt.figure(figsize=(10, 7))
-plt.title('Sensory prediction error on acceleration')
+plt.title('(Weighted) Sensory pred. error \n on acceleration')
 plt.plot(np.arange(0, T-dt, dt), xi_z[:-1, 1])
 plt.xlim(0, T)
 plt.xlabel('Time ($s$)')
@@ -176,7 +177,7 @@ plt.ticklabel_format(axis='y', style='sci', scilimits=(-2,2))
 plt.savefig("figures/cruiseControlActiveInferenceSensoryPEAcceleration.pdf")
 
 plt.figure(figsize=(10, 7))
-plt.title('System prediction error')
+plt.title('(Weighted) \n System pred. error')
 plt.plot(np.arange(0, T-dt, dt), xi_w[:-1])
 plt.xlim(0, T)
 plt.xlabel('Time ($s$)')
@@ -197,7 +198,7 @@ plt.title('Action')
 plt.plot(np.arange(0, T-dt, dt), a[:-1])
 plt.xlim(0, T)
 plt.xlabel('Time ($s$)')
-plt.ylabel('Acceleration ($km/h^2$)')
+plt.ylabel('Acceleration ($m/s^2$)')
 plt.savefig("figures/cruiseControlActiveInferenceAction.pdf")
 
 plt.show()
